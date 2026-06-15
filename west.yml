@@ -17,11 +17,34 @@ manifest:
       url-base: https://github.com/facchinm
     - name: pillo79
       url-base: https://github.com/pillo79
+    - name: abcdaaa1111
+      url-base: https://github.com/abcdaaa1111
+    - name: ZhengyuYan-work
+      url-base: https://github.com/ZhengyuYan-work
 
   projects:
-    - name: zephyr
-      remote: arduino
-      revision: zephyr-arduino-v4.2.0
+    # - name: zephyr
+    #   remote: arduino
+    #   revision: zephyr-arduino-v4.2.0
+    #   import:
+    #     name-allowlist:
+    #       - cmsis
+    #       - cmsis_6
+    #       - littlefs
+    #       - tinycrypt
+    #       - mbedtls
+    #       - segger
+    #       - thrift
+    #       - mcuboot
+    #       - nanopb
+    #       - lvgl
+    #       - fatfs
+    #     path-allowlist:
+    #       - modules/hal/*
+
+    - name: zephyr-downstream
+      remote: ZhengyuYan-work
+      revision: main
       import:
         name-allowlist:
           - cmsis

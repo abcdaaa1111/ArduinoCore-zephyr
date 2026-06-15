@@ -198,3 +198,30 @@
 		zephyr,resolution = <12>;
 	};
 };
+
+/*
+ * Re-partition the 2MB on-board QSPI flash:
+ *   0x000000 - 0x0000FF : second_stage_bootloader (256B, untouched)
+ *   0x000100 - 0x07FFFF : code-partition  (~512KB, loader)
+ *   0x080000 - 0x1FFFFF : user_sketch     (1.5MB, Arduino sketches)
+ *
+ * The upstream Pico DTS gives all post-bootloader flash to code_partition,
+ * so we delete and redefine it here.
+ */
+/delete-node/ &code_partition;
+
+&flash0 {
+	partitions {
+		code_partition: partition@100 {
+			label = "code-partition";
+			reg = <0x100 (DT_SIZE_K(512) - 0x100)>;
+			read-only;
+		};
+
+		user_sketch: partition@80000 {
+			label = "user_sketch";
+			reg = <0x80000 (DT_SIZE_M(2) - DT_SIZE_K(512))>;
+		};
+	};
+};
+

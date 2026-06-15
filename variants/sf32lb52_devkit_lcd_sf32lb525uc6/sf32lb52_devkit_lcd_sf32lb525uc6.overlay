@@ -1,0 +1,249 @@
+/*
+ * Copyright (c) Arduino s.r.l. and/or its affiliated companies
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <zephyr/dt-bindings/pinctrl/sf32lb52x-pinctrl.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+#include <zephyr/dt-bindings/adc/adc.h>
+
+/*
+ * Flash layout (py25q128ha, 16MB total):
+ *   0x000000 - 0x00FFFF : ptable  (64KB,  from board DTS, unchanged)
+ *   0x010000 - 0x10FFFF : code    (1MB,   loader binary — shrunk from original 16320KB)
+ *   0x110000 - 0xFFFFFF : user_sketch (~14.9MB, where Arduino sketches are stored)
+ *
+ * The original board DTS sets code=16320KB which fills all remaining flash.
+ * We shrink it to 1MB and allocate the rest to user_sketch.
+ */
+
+/* Shrink the loader code partition to 1MB */
+&code {
+	reg = <0x10000 DT_SIZE_K(1024)>;
+};
+
+/* Add the user_sketch partition in the remaining flash space */
+&py25q128ha {
+	/*
+	 * Mark the flash node as soc-nv-flash so DT_MTD_FROM_FIXED_PARTITION()
+	 * resolves partitions to the parent controller device (&mpi2) instead of
+	 * to the flash child node itself.
+	 */
+	compatible = "puya,py25q128ha", "jedec,qspi-nor", "soc-nv-flash";
+	reg = <0x12000000 DT_SIZE_M(16)>;
+
+	partitions {
+		user_sketch: partition@110000 {
+			label = "user_sketch";
+			/* 0x1000000 - 0x110000 = 0xEF0000 (~14.9MB) */
+			reg = <0x110000 0xEF0000>;
+		};
+	};
+};
+
+/ {
+	zephyr,user {
+		/*
+		 * Arduino digital pin index -> SoC pin:
+		 *   D0       -> PA00  (PWM4 / LCDC)
+		 *   D1       -> PA01  (PWM5 / LCDC)
+		 *   D2       -> PA02  (PWM6 / LCDC)
+		 *   D3       -> PA03  (PWM7 / LCDC)
+		 *   D4       -> PA04  (I2C2_SDA / LCDC)
+		 *   D5       -> PA05  (I2C2_SCL / LCDC)
+		 *   D6       -> PA06  (I2C3_SDA / LCDC)
+		 *   D7       -> PA07  (I2C3_SCL / LCDC)
+		 *   D8       -> PA08  (LCDC)
+		 *   D9       -> PA09  (PWM0)
+		 *   D10      -> PA20  (PWM1)
+		 *   D11      -> PA22  (LXT32 XI — not recommended)
+		 *   D12      -> PA23  (LXT32 XO — not recommended)
+		 *   D13 LED  -> PA26  (PWM2 / builtin LED)
+		 *   D14 MOSI -> PA24  (SPI1 DIO)
+		 *   D15 MISO -> PA25  (SPI1 DI)
+		 *   D16      -> PA27  (I2C1_SDA)
+		 *   D17 SCK  -> PA28  (SPI1 CLK)
+		 *   D18 CS   -> PA29  (SPI1 CS)
+		 *   D19      -> PA38  (I2C1_SCL / SPI2_MISO)
+		 *   D20      -> PA34  (KEY1 — not on header)
+		 *   D21      -> PA11  (KEY2 — not on header)
+		 *   D22      -> PA32  (PWM3 / RGB LED — not on header)
+		 *   D23      -> PA37  (LCDC / SPI2_MOSI)
+		 *   D24      -> PA39  (LCDC / SPI2_CLK)
+		 *   D25      -> PA40  (LCDC / SPI2_CS)
+		 *   D26      -> PA41  (LCDC)
+		 *   D27      -> PA42  (LCDC)
+		 *   D28      -> PA43  (LCDC)
+		 */
+		digital-pin-gpios =
+			<&gpioa_00_31 0 GPIO_ACTIVE_HIGH>,   /* D0  PA00 */
+			<&gpioa_00_31 1 GPIO_ACTIVE_HIGH>,   /* D1  PA01 */
+			<&gpioa_00_31 2 GPIO_ACTIVE_HIGH>,   /* D2  PA02 */
+			<&gpioa_00_31 3 GPIO_ACTIVE_HIGH>,   /* D3  PA03 */
+			<&gpioa_00_31 4 GPIO_ACTIVE_HIGH>,   /* D4  PA04 */
+			<&gpioa_00_31 5 GPIO_ACTIVE_HIGH>,   /* D5  PA05 */
+			<&gpioa_00_31 6 GPIO_ACTIVE_HIGH>,   /* D6  PA06 */
+			<&gpioa_00_31 7 GPIO_ACTIVE_HIGH>,   /* D7  PA07 */
+			<&gpioa_00_31 8 GPIO_ACTIVE_HIGH>,   /* D8  PA08 */
+			<&gpioa_00_31 9 GPIO_ACTIVE_HIGH>,   /* D9  PA09 */
+			<&gpioa_00_31 20 GPIO_ACTIVE_HIGH>,  /* D10 PA20 */
+			<&gpioa_00_31 22 GPIO_ACTIVE_HIGH>,  /* D11 PA22 */
+			<&gpioa_00_31 23 GPIO_ACTIVE_HIGH>,  /* D12 PA23 */
+			<&gpioa_00_31 26 GPIO_ACTIVE_LOW>,   /* D13 PA26, builtin LED */
+			<&gpioa_00_31 24 GPIO_ACTIVE_HIGH>,  /* D14 PA24, SPI MOSI */
+			<&gpioa_00_31 25 GPIO_ACTIVE_HIGH>,  /* D15 PA25, SPI MISO */
+			<&gpioa_00_31 27 GPIO_ACTIVE_HIGH>,  /* D16 PA27, I2C1_SDA */
+			<&gpioa_00_31 28 GPIO_ACTIVE_HIGH>,  /* D17 PA28, SPI CLK */
+			<&gpioa_00_31 29 GPIO_ACTIVE_HIGH>,  /* D18 PA29, SPI CS */
+			<&gpioa_32_44 6 GPIO_ACTIVE_HIGH>,   /* D19 PA38, I2C1_SCL */
+			<&gpioa_32_44 2 GPIO_ACTIVE_HIGH>,   /* D20 PA34, KEY1 */
+			<&gpioa_00_31 11 GPIO_ACTIVE_HIGH>,  /* D21 PA11, KEY2 */
+			<&gpioa_32_44 0 GPIO_ACTIVE_HIGH>,   /* D22 PA32, RGB LED */
+			<&gpioa_32_44 5 GPIO_ACTIVE_HIGH>,   /* D23 PA37 */
+			<&gpioa_32_44 7 GPIO_ACTIVE_HIGH>,   /* D24 PA39 */
+			<&gpioa_32_44 8 GPIO_ACTIVE_HIGH>,   /* D25 PA40 */
+			<&gpioa_32_44 9 GPIO_ACTIVE_HIGH>,   /* D26 PA41 */
+			<&gpioa_32_44 10 GPIO_ACTIVE_HIGH>,  /* D27 PA42 */
+			<&gpioa_32_44 11 GPIO_ACTIVE_HIGH>;  /* D28 PA43 */
+
+		builtin-led-gpios = <&gpioa_00_31 26 GPIO_ACTIVE_LOW>;
+		serials = <&usart1>;
+		i2cs = <&i2c1>;
+		spis = <&spi1>;
+
+		/*
+		 * ADC channels (Arduino A0..A2 -> GPADC CH2/CH3/CH5).
+		 * adc-pin-gpios must reference the same GPIO phandle/pin as in
+		 * digital-pin-gpios so the analog pin number is resolved.
+		 */
+		io-channels =
+			<&gpadc 2>, <&gpadc 3>, <&gpadc 5>;
+		adc-pin-gpios =
+			<&gpioa_00_31 30 GPIO_ACTIVE_HIGH>, /* PA30 -> CH2 -> A0 */
+			<&gpioa_00_31 31 GPIO_ACTIVE_HIGH>, /* PA31 -> CH3 -> A1 */
+			<&gpioa_32_44 1 GPIO_ACTIVE_HIGH>;  /* PA33 -> CH5 -> A2 */
+
+		/*
+		 * PWM mapping (hardcoded pinctrl at build time).
+		 *   PWM0 D9  PA09 -> GPTIM2 CH1
+		 *   PWM1 D10 PA20 -> GPTIM2 CH2
+		 *   PWM2 D13 PA26 -> GPTIM2 CH3
+		 *   PWM3 D22 PA32 -> GPTIM2 CH4
+		 *   PWM4 D0  PA00 -> ATIM1 CH1
+		 *   PWM5 D1  PA01 -> ATIM1 CH2
+		 *   PWM6 D2  PA02 -> ATIM1 CH3
+		 *   PWM7 D3  PA03 -> ATIM1 CH4
+		 */
+		pwms =
+			<&gptim2_pwm 0 PWM_USEC(255) PWM_POLARITY_NORMAL>, /* PWM0 */
+			<&gptim2_pwm 1 PWM_USEC(255) PWM_POLARITY_NORMAL>, /* PWM1 */
+			<&gptim2_pwm 2 PWM_USEC(255) PWM_POLARITY_NORMAL>, /* PWM2 */
+			<&gptim2_pwm 3 PWM_USEC(255) PWM_POLARITY_NORMAL>, /* PWM3 */
+			<&atim1_pwm 0 PWM_USEC(255) PWM_POLARITY_NORMAL>,  /* PWM4 */
+			<&atim1_pwm 1 PWM_USEC(255) PWM_POLARITY_NORMAL>,  /* PWM5 */
+			<&atim1_pwm 2 PWM_USEC(255) PWM_POLARITY_NORMAL>,  /* PWM6 */
+			<&atim1_pwm 3 PWM_USEC(255) PWM_POLARITY_NORMAL>;  /* PWM7 */
+		pwm-pin-gpios =
+			<&gpioa_00_31 9 GPIO_ACTIVE_HIGH>,   /* PWM0 - D9  PA09 */
+			<&gpioa_00_31 20 GPIO_ACTIVE_HIGH>,  /* PWM1 - D10 PA20 */
+			<&gpioa_00_31 26 GPIO_ACTIVE_HIGH>,  /* PWM2 - D13 PA26 */
+			<&gpioa_32_44 0 GPIO_ACTIVE_HIGH>,   /* PWM3 - D22 PA32 */
+			<&gpioa_00_31 0 GPIO_ACTIVE_HIGH>,   /* PWM4 - D0  PA00 */
+			<&gpioa_00_31 1 GPIO_ACTIVE_HIGH>,   /* PWM5 - D1  PA01 */
+			<&gpioa_00_31 2 GPIO_ACTIVE_HIGH>,   /* PWM6 - D2  PA02 */
+			<&gpioa_00_31 3 GPIO_ACTIVE_HIGH>;   /* PWM7 - D3  PA03 */
+	};
+};
+
+&pinctrl {
+	/* Override I2C1 pinctrl for Arduino: SDA=PA27, SCL=PA38 */
+	i2c1_default: i2c1_default {
+		group1 {
+			pinmux = <PA27_I2C1_SDA>, <PA38_I2C1_SCL>;
+			input-enable;
+		};
+	};
+
+	gpadc_default: gpadc_default {
+		group1 {
+			pinmux = <PA30_GPADC_CH2>, <PA31_GPADC_CH3>,
+				 <PA33_GPADC_CH5>;
+		};
+	};
+
+	atim1_pwm_default: atim1_pwm_default {
+		group1 {
+			pinmux = <PA00_ATIM1_CH1>, <PA01_ATIM1_CH2>,
+				 <PA02_ATIM1_CH3>, <PA03_ATIM1_CH4>;
+		};
+	};
+
+	gptim2_pwm_default: gptim2_pwm_default {
+		group1 {
+			pinmux = <PA09_GPTIM2_CH1>, <PA20_GPTIM2_CH2>,
+				 <PA26_GPTIM2_CH3>, <PA32_GPTIM2_CH4>;
+		};
+	};
+};
+
+&gpadc {
+	pinctrl-0 = <&gpadc_default>;
+	pinctrl-names = "default";
+	status = "okay";
+	nvmem-cells = <&sf32lb52_calib_bank1>;
+	nvmem-cell-names = "calibration";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+
+	/*
+	 * One channel subnode per io-channels entry. ADC_DT_SPEC_GET_BY_IDX
+	 * requires zephyr,gain / zephyr,reference / zephyr,acquisition-time /
+	 * zephyr,resolution; the sf32lb GPADC driver only accepts
+	 * ADC_GAIN_1, ADC_REF_INTERNAL, ADC_ACQ_TIME_DEFAULT, resolution=12.
+	 */
+	channel@2 {
+		reg = <2>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+	channel@3 {
+		reg = <3>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+	channel@5 {
+		reg = <5>;
+		zephyr,gain = "ADC_GAIN_1";
+		zephyr,reference = "ADC_REF_INTERNAL";
+		zephyr,acquisition-time = <ADC_ACQ_TIME_DEFAULT>;
+		zephyr,resolution = <12>;
+	};
+};
+
+&atim {
+	sifli,prescaler = <47>;
+	status = "okay";
+
+	atim1_pwm: pwm {
+		pinctrl-0 = <&atim1_pwm_default>;
+		pinctrl-names = "default";
+		status = "okay";
+	};
+};
+
+&gptim2 {
+	sifli,prescaler = <47>;
+	status = "okay";
+
+	gptim2_pwm: pwm {
+		pinctrl-0 = <&gptim2_pwm_default>;
+		pinctrl-names = "default";
+		status = "okay";
+	};
+};

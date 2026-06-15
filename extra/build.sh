@@ -7,7 +7,8 @@ set -e
 
 source venv/bin/activate
 
-ZEPHYR_BASE=$(west topdir)/zephyr
+ZEPHYR_BASE=$(west topdir)/$(west config zephyr.base || echo zephyr)
+export ZEPHYR_BASE
 
 if [ x$ZEPHYR_SDK_INSTALL_DIR == x"" ]; then
 	SDK_PATH=$(west sdk list | grep path | tail -n 1 | cut -d ':' -f 2 | tr -d ' ')

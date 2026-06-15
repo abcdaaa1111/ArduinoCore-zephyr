@@ -405,5 +405,54 @@ EXPORT_SYMBOL(arm_irq_priority_set);
 #endif
 
 #if defined(__arm__)
+/*
+ * Some HALs (e.g. rpi_pico) define SystemCoreClock but do not expose its
+ * declaration through any commonly-included header. Provide a local extern
+ * so this export compiles regardless of which CMSIS bundle is used.
+ */
+extern uint32_t SystemCoreClock;
 EXPORT_SYMBOL(SystemCoreClock);
 #endif
+
+// /*
+//  * Arduino ZephyrI2C / Wire library symbols.
+//  * Exported so that dynamically-linked sketches can use Wire.
+//  * Mangled C++ names match what the Arduino sketch's C++ compiler generates.
+//  */
+// extern int Wire;
+// EXPORT_SYMBOL(Wire);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C5beginEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C5beginEh);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C3endEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C17beginTransmissionEh);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C15endTransmissionEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C15endTransmissionEb);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C11requestFromEhj);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C11requestFromEhjb);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C5writeEh);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C5writeEi);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C5writeEPKhj);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C4readEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C9availableEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C4peekEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C5flushEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C8setClockEj);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C9onReceiveEPFviE);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrI2C9onRequestEPFvvE);
+
+// /*
+//  * Arduino ZephyrSPI library symbols.
+//  */
+// extern int SPI;
+// EXPORT_SYMBOL(SPI);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI5beginEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI3endEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI8transferEh);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI10transfer16Et);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI8transferEPvj);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI16beginTransactionENS_11SPISettingsE);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI14endTransactionEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI14usingInterruptEi);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI17notUsingInterruptEi);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI15attachInterruptEv);
+// FORCE_EXPORT_SYM(_ZN7arduino9ZephyrSPI15detachInterruptEv);

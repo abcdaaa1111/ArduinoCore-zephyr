@@ -32,7 +32,14 @@ foreach(variant ${VARIANTS})
 	message(STATUS "Processing ${variant}")
 	include(${dir}/llext-edk/cmake.cflags)
 
+	# TEMPORARY FIX: Filter out sifli HAL CMSIS path to avoid header conflicts
+	list(FILTER LLEXT_ALL_INCLUDE_CFLAGS EXCLUDE REGEX ".*/hal/sifli/cmsis/sf32lb52x")
+
+	# TEMPORARY FIX: Use variant's custom soc.h instead of HAL's
+	list(PREPEND LLEXT_ALL_INCLUDE_CFLAGS "-I${dir}/include")
+
 	list(TRANSFORM LLEXT_ALL_INCLUDE_CFLAGS REPLACE "-I${dir}" "-iwithprefixbefore")
+
 	list(JOIN LLEXT_ALL_INCLUDE_CFLAGS "\n" EDK_INCLUDES)
 	file(WRITE ${dir}/includes.txt "${EDK_INCLUDES}")
 
